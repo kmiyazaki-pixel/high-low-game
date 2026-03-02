@@ -13,23 +13,40 @@
         .field { display: flex; gap: 20px; margin: 20px 0; }
         .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.3); border-radius: 10px; position: relative; }
         .card { position: absolute; width: 100%; height: 100%; border-radius: 10px; transition: 0.6s; transform-style: preserve-3d; }
-        .card-back { background: #b71c1c; border: 2px solid #eee; }
+        .card-back { background: #b71c1c; border: 2px solid #eee; background-image: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 5px, #d32f2f 5px, #d32f2f 10px); }
         .btn-group { display: flex; gap: 10px; width: 90%; max-width: 400px; }
         .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
         .btn-gold { background: linear-gradient(to bottom, #ffd700, #ffb300); color: #222; }
         .btn:disabled { background: #555; color: #888; }
         .overlay { position: fixed; inset: 0; background: #071a08; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: 1px solid var(--gold); margin-bottom: 20px; text-align: center; width: 70%; }
+        input { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: 1px solid var(--gold); margin-bottom: 20px; text-align: center; width: 70%; background: #111; color: white; }
+        
+        /* 説明書モーダル */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: #111; border: 2px solid var(--gold); border-radius: 15px; padding: 25px; width: 85%; max-width: 400px; text-align: left; line-height: 1.6; }
     </style>
 </head>
 <body>
 
 <div id="setup-overlay" class="overlay">
     <h1 style="color:var(--gold)">ROYAL HIGH & LOW</h1>
-    <p>URLを共有して同じIDで入室してください</p>
+    <p>同じRoom IDでマッチングします</p>
     <input type="text" id="room-id" placeholder="Room ID (例: 777)" inputmode="latin">
     <div class="btn-group">
         <button class="btn btn-gold" onclick="startOnline()">オンライン入室</button>
+    </div>
+    <p style="text-decoration: underline; margin-top: 20px; cursor: pointer;" onclick="toggleManual(true)">遊びかたを見る</p>
+</div>
+
+<div id="manual-modal" class="modal" onclick="toggleManual(false)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h2 style="color:var(--gold); border-bottom: 1px solid var(--gold);">📜 遊びかた</h2>
+        <p>1. 相手と同じRoom IDで入室してください。<br>
+           2. 親のカードは表向き、子のカードは裏向きです。<br>
+           3. 子は、自分のカードが親より「大きい(HIGH)」か「小さい(LOW)」か予想します。<br>
+           4. 当たれば2ポイント獲得！<br>
+           5. 親と子は毎ターン交代します。</p>
+        <button class="btn btn-gold" style="width:100%" onclick="toggleManual(false)">閉じる</button>
     </div>
 </div>
 
@@ -38,7 +55,7 @@
         <div>OPP: <span id="opp-score">0</span></div>
         <div>YOU: <span id="my-score">0</span></div>
     </div>
-    <div id="status" style="margin: 10px; font-weight: bold; color: var(--gold);">接続を待機中...</div>
+    <div id="status" style="margin: 10px; font-weight: bold; color: var(--gold); height: 3em;">接続を待機中...</div>
     <div class="field">
         <div class="slot" id="p-slot"></div>
         <div class="slot" id="c-slot"></div>
@@ -52,14 +69,21 @@
 <script>
     let ws;
     let room;
+    let myScore = 0;
+    let oppScore = 0;
+    let myRole = "";
+
+    function toggleManual(show) {
+        document.getElementById('manual-modal').style.display = show ? "flex" : "none";
+    }
 
     function startOnline() {
         room = document.getElementById('room-id').value;
         if(!room) return alert("IDを入力してください");
 
-        // ★重要: ここに自分のサーバーのURLを入れます
-        // テスト用としてGlitchなどの無料WebSocketサーバーが必要です
-        ws = new WebSocket('wss://your-poker-server.glitch.me'); 
+        // ★重要: あなたのRenderのURLに書き換えてください
+        // 例: 'wss://royal-highlow.onrender.com'
+        ws = new WebSocket('wss://【あなたのRenderプロジェクト名】.onrender.com'); 
 
         ws.onopen = () => {
             ws.send(JSON.stringify({type: 'JOIN', room: room}));
@@ -70,6 +94,11 @@
             const data = JSON.parse(e.data);
             handleServerData(data);
         };
+
+        ws.onclose = () => {
+            alert("接続が切れました。リロードしてください。");
+            location.reload();
+        };
     }
 
     function handleServerData(data) {
@@ -79,23 +108,25 @@
         } else if(data.type === 'START') {
             status.innerText = "対戦開始！";
         } else if(data.type === 'TURN') {
-            // 親のカードを表示し、子が予想する
+            myRole = data.role;
             renderTurn(data);
+        } else if(data.type === 'RESULT') {
+            revealResult(data);
         }
     }
 
     function renderTurn(data) {
         const pSlot = document.getElementById('p-slot');
         const cSlot = document.getElementById('c-slot');
-        pSlot.innerHTML = `<div class="card"><img src="images/png/${data.parentCard}.png" width="100%"></div>`;
+        pSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}" width="100%"></div>`;
         cSlot.innerHTML = `<div class="card card-back"></div>`;
 
         if(data.role === 'CHILD') {
-            document.getElementById('status').innerText = "あなたの番です (HIGH か LOW)";
+            document.getElementById('status').innerText = "あなたの番です！予想を選んでください";
             document.getElementById('h-btn').disabled = false;
             document.getElementById('l-btn').disabled = false;
         } else {
-            document.getElementById('status').innerText = "相手が予想中...";
+            document.getElementById('status').innerText = "相手が予想しています...";
         }
     }
 
@@ -105,9 +136,23 @@
         document.getElementById('l-btn').disabled = true;
     }
 
-    // カード画像ファイル名の取得用
-    function getCardFile(id) {
-        // (以前のロジックと同じ)
+    function revealResult(data) {
+        const cSlot = document.getElementById('c-slot');
+        // 子のカードをめくる
+        cSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}" width="100%"></div>`;
+        
+        const status = document.getElementById('status');
+        // ここでスコア計算などはサーバーから送ってもらうか、簡易的に表示
+        status.innerText = "結果表示中...";
+    }
+
+    function getCardFile(n) {
+        const suits = ['hearts', 'spades', 'diamonds', 'clubs'];
+        const suit = suits[Math.floor((n-1)/13)];
+        let val = (n-1) % 13 + 1;
+        const names = {1:'ace', 11:'jack', 12:'queen', 13:'king'};
+        const valName = names[val] || val;
+        return `${valName}_of_${suit}.png`;
     }
 </script>
 </body>
