@@ -2,76 +2,212 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>High & Low Game</title>
+    <title>Royal High & Low - Masterpiece</title>
     <style>
-        body { background-color: #2d5a27; color: white; font-family: sans-serif; text-align: center; }
-        .game-container { max-width: 600px; margin: auto; padding: 20px; border: 5px solid #3e2723; border-radius: 15px; background: #35652d; }
-        .card-area { display: flex; justify-content: space-around; margin: 20px 0; }
-        .card { width: 100px; height: 140px; background: white; border-radius: 8px; color: black; line-height: 140px; font-size: 24px; font-weight: bold; border: 2px solid #000; }
-        .card.back { background: #b71c1c; color: #b71c1c; } /* 裏向き */
-        .controls { margin-top: 20px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; }
-        .score { font-size: 18px; margin-top: 10px; }
+        :root { --card-w: 120px; --card-h: 180px; --gold: #ffd700; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #071a08; color: white; margin: 0; overflow: hidden; text-align: center; }
+        #game-screen { display: flex; flex-direction: column; align-items: center; height: 100vh; background: radial-gradient(circle at center, #1b5e20 0%, #071a08 100%); }
+        
+        #score-board { display: flex; justify-content: space-around; width: 100%; padding: 20px; font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+        #status-bar { font-size: 2rem; font-weight: 900; color: var(--gold); margin: 20px 0; text-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+
+        /* フィールドエリア */
+        #field { display: flex; gap: 50px; height: 250px; align-items: center; justify-content: center; margin: 30px 0; }
+        .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.3); border-radius: 12px; position: relative; }
+        .slot-label { position: absolute; bottom: -30px; width: 100%; text-align: center; font-size: 0.9rem; color: #aaa; }
+
+        .card-wrapper { 
+            position: absolute; width: var(--card-w); height: var(--card-h); 
+            border-radius: 12px; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            transform-style: preserve-3d; box-shadow: 0 8px 15px rgba(0,0,0,0.4); 
+        }
+        .card-back { background: #b71c1c; border: 3px solid #eee; background-image: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #d32f2f 10px, #d32f2f 20px); }
+        .card-front { background: white; border: 1px solid #ddd; backface-visibility: hidden; }
+
+        /* アニメーション用 */
+        .get-anim { transform: translateY(500px) scale(0.2) rotate(360deg) !important; opacity: 0; transition: 0.8s ease-in !important; }
+        .lose-anim { transform: translateY(-500px) scale(0.2) !important; opacity: 0; transition: 0.8s ease-in !important; }
+
+        #control-panel { display: flex; gap: 20px; margin-top: 50px; }
+        .predict-btn { background: linear-gradient(135deg, #ffd700, #ffb300); color: #222; border: none; padding: 20px 40px; border-radius: 50px; font-size: 1.8rem; cursor: pointer; font-weight: 900; box-shadow: 0 6px 20px rgba(0,0,0,0.4); transition: 0.2s; }
+        .predict-btn:hover { transform: scale(1.05); }
+        .predict-btn:disabled { background: #555; opacity: 0.5; }
+
+        .overlay { position: fixed; inset: 0; background: #071a08; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 6000; display: none; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: #111; border: 2px solid var(--gold); border-radius: 15px; max-width: 500px; padding: 30px; text-align: left; line-height: 1.6; }
     </style>
 </head>
 <body>
-    <h1>High & Low</h1>
-    <div class="game-container">
-        <div id="turn-info">Player 1の親番です</div>
-        <div class="card-area">
-            <div>
-                <p>親のカード (表)</p>
-                <div id="parent-card" class="card">?</div>
-            </div>
-            <div>
-                <p>子のカード (裏)</p>
-                <div id="child-card" class="card back">?</div>
-            </div>
-        </div>
-        <div class="controls">
-            <button onclick="guess('HIGH')">HIGH (大きい)</button>
-            <button onclick="guess('LOW')">LOW (小さい)</button>
-        </div>
-        <div id="result-msg"></div>
-        <div class="score">
-            P1獲得: <span id="p1-score">0</span> | P2獲得: <span id="p2-score">0</span>
-        </div>
-        <div id="deck-count">残り枚数: 52</div>
+
+<audio id="bgm" src="jazz.mp3" loop></audio>
+
+<div id="mode-overlay" class="overlay">
+    <h1 style="color:var(--gold); font-size: 3.5rem; letter-spacing: 10px; margin-bottom: 30px;">ROYAL HIGH & LOW</h1>
+    <button class="predict-btn" onclick="initGame()">GAME START</button>
+    <button style="background:none; border:1px solid var(--gold); color:var(--gold); padding:10px 20px; border-radius:20px; cursor:pointer; margin-top:20px;" onclick="toggleManual(true)">ルール説明</button>
+</div>
+
+<div id="manual-modal" class="modal">
+    <div class="modal-content">
+        <h2 style="color:var(--gold);">📜 ハイ＆ロー ルール</h2>
+        <ul>
+            <li>親と子が1枚ずつカードを出します。</li>
+            <li>親は「表向き」、子は「裏向き」です。</li>
+            <li>子は、自分のカードが親より<strong>大きい(High)</strong>か<strong>小さい(Low)</strong>かを予想します。</li>
+            <li>当たればカード2枚(2点)獲得！外れ、または同点なら没収です。</li>
+            <li>親と子を交互に入れ替え、全52枚使い切った時の点数で競います。</li>
+        </ul>
+        <button class="predict-btn" style="width:100%;" onclick="toggleManual(false)">閉じる</button>
+    </div>
+</div>
+
+<div id="game-screen">
+    <div id="score-board">
+        <div>CPU: <span id="cpu-score">0</span> pts</div>
+        <div>YOU: <span id="player-score">0</span> pts</div>
+    </div>
+    <div id="status-bar">READY...</div>
+
+    <div id="field">
+        <div class="slot" id="parent-slot"><div class="slot-label">親のカード</div></div>
+        <div class="slot" id="child-slot"><div class="slot-label">子のカード</div></div>
     </div>
 
-    <script>
-        async function guess(prediction) {
-            const response = await fetch('/api/play', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ prediction: prediction })
-            });
-            const data = await response.json();
-            
-            // 結果の反映
-            document.getElementById('parent-card').innerText = data.parentCard;
-            document.getElementById('child-card').innerText = data.childCard;
-            document.getElementById('child-card').classList.remove('back');
-            document.getElementById('result-msg').innerText = data.message;
-            document.getElementById('p1-score').innerText = data.p1Score;
-            document.getElementById('p2-score').innerText = data.p2Score;
-            document.getElementById('deck-count').innerText = "残り枚数: " + data.remaining;
-            document.getElementById('turn-info').innerText = data.nextTurn;
+    <div id="control-panel">
+        <button id="high-btn" class="predict-btn" onclick="predict('high')" disabled>HIGH</button>
+        <button id="low-btn" class="predict-btn" onclick="predict('low')" disabled>LOW</button>
+    </div>
+    
+    <div style="margin-top: 40px; color: #aaa;">残りの手札: <span id="deck-count">26</span>枚</div>
+</div>
 
-            // 次のターンへ（少し遅延させてリセット）
-            if(data.remaining > 0) {
-                setTimeout(resetTable, 2000);
+<script>
+    let pHand = [], cHand = [], pScore = 0, cScore = 0;
+    let isPlayerParent = true, animating = false;
+
+    function toggleManual(show) { document.getElementById('manual-modal').style.display = show ? "flex" : "none"; }
+
+    function initGame() {
+        document.getElementById('mode-overlay').style.display = "none";
+        document.getElementById('bgm').volume = 0.2;
+        document.getElementById('bgm').play().catch(()=>{});
+        
+        let deck = Array.from({length: 52}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+        pHand = deck.slice(0, 26);
+        cHand = deck.slice(26, 52);
+        pScore = 0; cScore = 0;
+        isPlayerParent = true;
+        nextTurn();
+    }
+
+    function getCardFile(n) {
+        const suits = ['hearts', 'spades', 'diamonds', 'clubs'];
+        const suit = suits[Math.floor((n-1)/13)];
+        let val = (n-1) % 13 + 1;
+        const names = {1:'ace', 11:'jack', 12:'queen', 13:'king'};
+        return `images/png/${names[val] || val}_of_${suit}.png`;
+    }
+
+    function getCardValue(n) { return (n - 1) % 13 + 1; }
+
+    function nextTurn() {
+        if (pHand.length === 0) { endGame(); return; }
+        
+        animating = true;
+        document.getElementById('deck-count').innerText = pHand.length;
+        document.getElementById('parent-slot').innerHTML = '<div class="slot-label">親のカード</div>';
+        document.getElementById('child-slot').innerHTML = '<div class="slot-label">子のカード</div>';
+        
+        const status = document.getElementById('status-bar');
+        status.innerText = isPlayerParent ? "あなたの親番です（CPUが予想中）" : "あなたの番です！予想してください";
+
+        // 親が表を出す
+        const pCard = isPlayerParent ? pHand[0] : cHand[0];
+        const pEl = createCardEl(pCard, true);
+        document.getElementById('parent-slot').appendChild(pEl);
+
+        // 子が裏を出す
+        const cCard = isPlayerParent ? cHand[0] : pHand[0];
+        const cEl = createCardEl(cCard, false);
+        document.getElementById('child-slot').appendChild(cEl);
+
+        setTimeout(() => {
+            animating = false;
+            if (isPlayerParent) {
+                setTimeout(cpuPredict, 1000);
             } else {
-                alert("ゲーム終了！勝者: " + data.winner);
+                document.getElementById('high-btn').disabled = false;
+                document.getElementById('low-btn').disabled = false;
             }
-        }
+        }, 600);
+    }
 
-        function resetTable() {
-            document.getElementById('parent-card').innerText = "?";
-            document.getElementById('child-card').innerText = "?";
-            document.getElementById('child-card').classList.add('back');
-            document.getElementById('result-msg').innerText = "";
+    function createCardEl(n, isFront) {
+        const el = document.createElement('div');
+        el.className = `card-wrapper ${isFront ? '' : 'card-back'}`;
+        if (isFront) {
+            el.innerHTML = `<img src="${getCardFile(n)}" style="width:100%;height:100%;border-radius:10px;">`;
         }
-    </script>
+        return el;
+    }
+
+    function cpuPredict() {
+        const pVal = getCardValue(pHand[0]);
+        const choice = pVal > 7 ? 'low' : 'high'; // CPUの単純な戦略
+        predict(choice);
+    }
+
+    function predict(choice) {
+        if (animating) return;
+        animating = true;
+        document.getElementById('high-btn').disabled = true;
+        document.getElementById('low-btn').disabled = true;
+
+        const pVal = isPlayerParent ? getCardValue(pHand[0]) : getCardValue(cHand[0]);
+        const cVal = isPlayerParent ? getCardValue(cHand[0]) : getCardValue(pHand[0]);
+        const cCard = isPlayerParent ? cHand[0] : pHand[0];
+
+        // 子のカードをオープン
+        const cSlot = document.getElementById('child-slot');
+        cSlot.firstChild.nextSibling.className = "card-wrapper";
+        cSlot.firstChild.nextSibling.innerHTML = `<img src="${getCardFile(cCard)}" style="width:100%;height:100%;border-radius:10px;">`;
+        cSlot.firstChild.nextSibling.style.transform = "rotateY(180deg)";
+
+        setTimeout(() => {
+            let win = false;
+            if (choice === 'high' && cVal > pVal) win = true;
+            if (choice === 'low' && cVal < pVal) win = true;
+
+            const status = document.getElementById('status-bar');
+            if (win) {
+                status.innerText = "当たり！ +2 pts";
+                if (isPlayerParent) cScore += 2; else pScore += 2;
+                document.getElementById('parent-slot').firstChild.nextSibling.classList.add(isPlayerParent ? 'lose-anim' : 'get-anim');
+                document.getElementById('child-slot').firstChild.nextSibling.classList.add(isPlayerParent ? 'lose-anim' : 'get-anim');
+            } else {
+                status.innerText = (cVal === pVal) ? "引き分け（没収）" : "はずれ！";
+                document.getElementById('parent-slot').firstChild.nextSibling.classList.add('lose-anim');
+                document.getElementById('child-slot').firstChild.nextSibling.classList.add('lose-anim');
+            }
+
+            document.getElementById('player-score').innerText = pScore;
+            document.getElementById('cpu-score').innerText = cScore;
+
+            setTimeout(() => {
+                pHand.shift(); cHand.shift();
+                isPlayerParent = !isPlayerParent;
+                animating = false;
+                nextTurn();
+            }, 1000);
+        }, 1000);
+    }
+
+    function endGame() {
+        let msg = pScore > cScore ? "あなたの勝利！" : (pScore < cScore ? "あなたの敗北..." : "引き分け！");
+        document.getElementById('status-bar').innerText = "GAME OVER";
+        setTimeout(() => { alert(`${msg}\nYOU: ${pScore} / CPU: ${cScore}`); location.reload(); }, 1000);
+    }
+</script>
 </body>
 </html>
