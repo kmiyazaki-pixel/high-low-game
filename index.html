@@ -2,27 +2,59 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Royal High & Low - Online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal High & Low - Mobile Ready</title>
     <style>
-        :root { --card-w: 120px; --card-h: 180px; --gold: #ffd700; }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #071a08; color: white; margin: 0; overflow: hidden; text-align: center; }
-        #game-screen { display: flex; flex-direction: column; align-items: center; height: 100vh; background: radial-gradient(circle at center, #1b5e20 0%, #071a08 100%); }
+        :root { 
+            /* スマホでは画面幅に合わせてカードサイズを可変にする */
+            --card-w: 25vw; 
+            --card-h: 38vw; 
+            --gold: #ffd700; 
+        }
+        @media (min-width: 600px) {
+            :root { --card-w: 120px; --card-h: 180px; }
+        }
+
+        body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            background: #071a08; color: white; margin: 0; 
+            overflow: hidden; text-align: center; 
+            touch-action: manipulation; /* 連打時のズーム防止 */
+        }
         
-        #score-board { display: flex; justify-content: space-around; width: 100%; padding: 20px; font-size: 1.5rem; font-weight: 900; color: var(--gold); }
-        #status-bar { font-size: 2rem; font-weight: 900; color: var(--gold); margin: 20px 0; text-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
-
-        #field { display: flex; gap: 50px; height: 250px; align-items: center; justify-content: center; margin: 30px 0; }
-        .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.3); border-radius: 12px; position: relative; }
+        #game-screen { 
+            display: flex; flex-direction: column; align-items: center; 
+            height: 100vh; width: 100vw;
+            background: radial-gradient(circle at center, #1b5e20 0%, #071a08 100%); 
+        }
         
-        .card-wrapper { position: absolute; width: var(--card-w); height: var(--card-h); border-radius: 12px; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; box-shadow: 0 8px 15px rgba(0,0,0,0.4); }
-        .card-back { background: #b71c1c; border: 3px solid #eee; background-image: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 10px, #d32f2f 10px, #d32f2f 20px); }
+        #score-board { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; font-size: 1.2rem; font-weight: 900; color: var(--gold); }
+        #status-bar { font-size: 1.4rem; font-weight: 900; color: var(--gold); margin: 15px 10px; height: 3rem; display: flex; align-items: center; justify-content: center; }
 
-        .get-anim { transform: translateY(500px) scale(0.2) rotate(360deg) !important; opacity: 0; transition: 0.8s ease-in !important; }
-        .lose-anim { transform: translateY(-500px) scale(0.2) !important; opacity: 0; transition: 0.8s ease-in !important; }
+        #field { display: flex; gap: 5vw; height: 45vw; align-items: center; justify-content: center; margin: 10px 0; }
+        @media (min-width: 600px) { #field { height: 200px; gap: 40px; } }
 
-        .draw-btn { background: linear-gradient(135deg, #ffd700, #ffb300); color: #222; border: none; padding: 20px 40px; border-radius: 50px; font-size: 1.5rem; cursor: pointer; font-weight: 900; box-shadow: 0 6px 20px rgba(0,0,0,0.4); margin: 10px; }
-        .overlay { position: fixed; inset: 0; background: #071a08; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        input { padding: 15px; font-size: 1.5rem; border-radius: 10px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; margin-bottom: 20px; }
+        .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.3); border-radius: 10px; position: relative; }
+        
+        .card-wrapper { position: absolute; width: 100%; height: 100%; border-radius: 10px; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; box-shadow: 0 5px 10px rgba(0,0,0,0.4); }
+        .card-back { background: #b71c1c; border: 2px solid #eee; background-image: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 5px, #d32f2f 5px, #d32f2f 10px); }
+
+        .get-anim { transform: translateY(100vh) scale(0.2) rotate(360deg) !important; opacity: 0; }
+        .lose-anim { transform: translateY(-100vh) scale(0.2) !important; opacity: 0; }
+
+        .btn-container { display: flex; gap: 10px; width: 90%; justify-content: center; }
+        .draw-btn { 
+            flex: 1; max-width: 200px;
+            background: linear-gradient(135deg, #ffd700, #ffb300); color: #222; 
+            border: none; padding: 15px 0; border-radius: 12px; 
+            font-size: 1.2rem; cursor: pointer; font-weight: 900; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); 
+        }
+        .draw-btn:active { transform: scale(0.95); }
+        .draw-btn:disabled { background: #555; color: #888; box-shadow: none; }
+
+        .overlay { position: fixed; inset: 0; background: #071a08; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+        input { width: 80%; max-width: 300px; padding: 15px; font-size: 1.2rem; border-radius: 10px; border: 1px solid var(--gold); background: #111; color: white; text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -30,47 +62,50 @@
 <audio id="bgm" src="jazz.mp3" loop></audio>
 
 <div id="mode-overlay" class="overlay">
-    <h1 style="color:var(--gold); font-size: 3rem; letter-spacing: 5px; margin-bottom: 30px;">ROYAL HIGH & LOW</h1>
-    <input type="text" id="room-input" placeholder="Room IDを入力">
-    <div style="display: flex; gap: 10px;">
-        <button class="draw-btn" onclick="connect('online')">入室する</button>
-        <button class="draw-btn" style="background: #444; color: white;" onclick="connect('cpu')">CPU対戦</button>
+    <h1 style="color:var(--gold); font-size: 2rem; margin-bottom: 20px;">ROYAL HIGH & LOW</h1>
+    <input type="text" id="room-input" placeholder="Room IDを入力" inputmode="latin">
+    <div class="btn-container">
+        <button class="draw-btn" onclick="connect('online')">入室</button>
+        <button class="draw-btn" style="background: #444; color: white;" onclick="connect('cpu')">CPU戦</button>
     </div>
 </div>
 
 <div id="game-screen">
     <div id="score-board">
-        <div>OPPONENT: <span id="opp-score">0</span> pts</div>
-        <div>YOU: <span id="my-score">0</span> pts</div>
+        <div>OPP: <span id="opp-score">0</span></div>
+        <div>YOU: <span id="my-score">0</span></div>
     </div>
-    <div id="status-bar">対戦相手を待っています...</div>
+    
+    <div id="status-bar">Room IDを入力して開始</div>
 
     <div id="field">
         <div class="slot" id="parent-slot"></div>
         <div class="slot" id="child-slot"></div>
     </div>
 
-    <div id="control-panel">
+    <div class="btn-container" id="control-panel">
         <button id="high-btn" class="draw-btn" onclick="sendChoice('HIGH')" disabled>HIGH</button>
         <button id="low-btn" class="draw-btn" onclick="sendChoice('LOW')" disabled>LOW</button>
     </div>
+    
+    <div style="margin-top: 20px; font-size: 0.8rem; color: #888;">Deck: <span id="deck-info">26</span> / 26</div>
 </div>
 
 <script>
-    let socket, myId, isParent, animating = false;
-    let scores = { me: 0, opp: 0 };
+    // --- (JavaScriptロジックは以前と同じですが、スマホでの描画バグを防ぐため調整) ---
+    let socket, isParent, animating = false, scores = { me: 0, opp: 0 };
 
     function connect(mode) {
         const rid = document.getElementById('room-input').value;
-        if (mode === 'online' && !rid) { alert("Room IDを入力してください"); return; }
+        if (mode === 'online' && !rid) return alert("IDを入力してください");
         
         document.getElementById('mode-overlay').style.display = 'none';
         document.getElementById('bgm').play().catch(()=>{});
 
         if (mode === 'cpu') {
-            startCPUMode();
+            startCPULogic(); // CPU対戦用のダミー関数
         } else {
-            // サーバーURLは適宜変更してください
+            // ※あなたのサーバーアドレスに書き換えてください
             socket = new WebSocket('wss://your-highlow-server.com');
             socket.onopen = () => socket.send(`JOIN|${rid}`);
             socket.onmessage = handleMessage;
@@ -79,89 +114,48 @@
 
     function handleMessage(e) {
         const [cmd, p1, p2, p3, p4] = e.data.split('|');
-        
-        switch(cmd) {
-            case 'START':
-                document.getElementById('status-bar').innerText = "ゲーム開始！";
-                break;
-            case 'TURN': // TURN | Role(PARENT/CHILD) | ParentCardID | MyScore | OppScore
-                isParent = (p1 === 'PARENT');
-                scores.me = p3; scores.opp = p4;
-                updateScores();
-                setupTurn(p1, parseInt(p2));
-                break;
-            case 'RESULT': // RESULT | ChildCardID | WinStatus(WIN/LOSE)
-                revealResult(parseInt(p1), p2);
-                break;
+        if (cmd === 'TURN') {
+            isParent = (p1 === 'PARENT');
+            scores.me = p3; scores.opp = p4;
+            document.getElementById('my-score').innerText = scores.me;
+            document.getElementById('opp-score').innerText = scores.opp;
+            setupTurn(p1, parseInt(p2));
+        } else if (cmd === 'RESULT') {
+            revealResult(parseInt(p1), p2);
         }
     }
 
     function setupTurn(role, pCardId) {
-        const status = document.getElementById('status-bar');
         const pSlot = document.getElementById('parent-slot');
         const cSlot = document.getElementById('child-slot');
-        
         pSlot.innerHTML = ''; cSlot.innerHTML = '';
         
-        // 親のカードを表示
-        const pCard = createCardEl(pCardId, true);
-        pSlot.appendChild(pCard);
+        pSlot.appendChild(createCardEl(pCardId, true));
+        cSlot.appendChild(createCardEl(null, false));
 
-        // 子のカード（裏向き）を表示
-        const cCard = createCardEl(null, false);
-        cSlot.appendChild(cCard);
-
+        const status = document.getElementById('status-bar');
         if (role === 'CHILD') {
-            status.innerText = "あなたの番です！予想してください";
+            status.innerText = "予想を選んでください";
             document.getElementById('high-btn').disabled = false;
             document.getElementById('low-btn').disabled = false;
         } else {
-            status.innerText = "相手が予想しています...";
+            status.innerText = "相手の入力を待機中...";
         }
     }
 
     function sendChoice(choice) {
+        if (animating) return;
         document.getElementById('high-btn').disabled = true;
         document.getElementById('low-btn').disabled = true;
-        socket.send(`PREDICT|${choice}`);
-    }
-
-    function revealResult(cCardId, statusText) {
-        animating = true;
-        const cSlot = document.getElementById('child-slot');
-        const cCard = cSlot.querySelector('.card-wrapper');
-        
-        // 子のカードをめくる演出
-        cCard.classList.remove('card-back');
-        cCard.innerHTML = `<img src="images/png/${getCardFile(cCardId)}" style="width:100%;height:100%;border-radius:10px;">`;
-        cCard.style.transform = "rotateY(180deg)";
-
-        setTimeout(() => {
-            const isWin = (statusText === 'WIN');
-            const pCard = document.getElementById('parent-slot').querySelector('.card-wrapper');
-            
-            if (isWin) {
-                // 当たった場合はスコアの方へ飛ぶ
-                const targetClass = isParent ? 'lose-anim' : 'get-anim';
-                pCard.classList.add(targetClass);
-                cCard.classList.add(targetClass);
-            } else {
-                pCard.classList.add('lose-anim');
-                cCard.classList.add('lose-anim');
-            }
-            animating = false;
-        }, 1500);
-    }
-
-    function updateScores() {
-        document.getElementById('my-score').innerText = scores.me;
-        document.getElementById('opp-score').innerText = scores.opp;
+        if (socket) socket.send(`PREDICT|${choice}`);
     }
 
     function createCardEl(id, isFront) {
         const el = document.createElement('div');
         el.className = `card-wrapper ${isFront ? '' : 'card-back'}`;
-        if (isFront) el.innerHTML = `<img src="images/png/${getCardFile(id)}" style="width:100%;height:100%;border-radius:10px;">`;
+        if (isFront) {
+            el.innerHTML = `<img src="images/png/${getCardFile(id)}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+        }
         return el;
     }
 
@@ -171,6 +165,22 @@
         let val = (n-1) % 13 + 1;
         const names = {1:'ace', 11:'jack', 12:'queen', 13:'king'};
         return `${names[val] || val}_of_${suit}.png`;
+    }
+
+    function revealResult(cCardId, result) {
+        animating = true;
+        const cCard = document.getElementById('child-slot').querySelector('.card-wrapper');
+        cCard.classList.remove('card-back');
+        cCard.innerHTML = `<img src="images/png/${getCardFile(cCardId)}" style="width:100%;height:100%;border-radius:10px;">`;
+        cCard.style.transform = "rotateY(180deg)";
+
+        setTimeout(() => {
+            const pCard = document.getElementById('parent-slot').querySelector('.card-wrapper');
+            const anim = (result === 'WIN') ? (isParent ? 'lose-anim' : 'get-anim') : 'lose-anim';
+            pCard.classList.add(anim);
+            cCard.classList.add(anim);
+            animating = false;
+        }, 1200);
     }
 </script>
 </body>
