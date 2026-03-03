@@ -13,73 +13,35 @@
         }
         @media (min-width: 600px) { :root { --card-w: 140px; --card-h: 200px; } }
 
-        body { 
-            font-family: 'Georgia', serif; 
-            background: var(--dark-green); color: white; margin: 0; 
-            overflow: hidden; text-align: center; 
-        }
+        body { font-family: 'Georgia', serif; background: var(--dark-green); color: white; margin: 0; overflow: hidden; text-align: center; }
 
-        /* 高級感のあるスコアボード */
-        .score-board { 
-            display: flex; justify-content: space-around; width: 100%; 
-            padding: 20px 0; background: rgba(0,0,0,0.5); 
-            border-bottom: 2px solid #b8860b; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-        .score-box { flex: 1; transition: transform 0.3s; }
-        .score-box.active { transform: scale(1.1); color: var(--gold-solid); }
+        .score-board { display: flex; justify-content: space-around; width: 100%; padding: 20px 0; background: rgba(0,0,0,0.6); border-bottom: 2px solid #b8860b; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .score-box { flex: 1; transition: 0.3s; opacity: 0.6; }
+        .score-box.active { opacity: 1; transform: scale(1.1); color: var(--gold-solid); }
         .score-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: #aaa; }
-        .score-val { font-size: 1.8rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .score-val { font-size: 1.8rem; font-weight: bold; }
 
-        #status { 
-            margin: 20px 10px; font-size: 1.1rem; font-weight: bold; height: 3rem;
-            color: var(--gold-solid); text-shadow: 0 0 10px rgba(255,215,0,0.3);
-        }
+        #status { margin: 20px 10px; font-size: 1rem; font-weight: bold; height: 3rem; color: var(--gold-solid); display: flex; align-items: center; justify-content: center; }
 
-        /* トランプの豪華な装飾 */
-        .field { display: flex; gap: 25px; margin: 10px 0; justify-content: center; }
-        .slot { 
-            width: var(--card-w); height: var(--card-h); 
-            border: 1px solid rgba(184, 134, 11, 0.3); border-radius: 12px; 
-            position: relative; background: rgba(0,0,0,0.2);
-        }
-        .card { 
-            position: absolute; width: 100%; height: 100%; border-radius: 10px; 
-            transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 0 3px rgba(184, 134, 11, 0.8);
-            overflow: hidden;
-        }
+        .field { display: flex; gap: 20px; margin: 10px 0; justify-content: center; }
+        .slot { width: var(--card-w); height: var(--card-h); border: 1px solid rgba(184, 134, 11, 0.4); border-radius: 12px; position: relative; background: rgba(0,0,0,0.3); }
+        .card { position: absolute; width: 100%; height: 100%; border-radius: 10px; transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 0 2px rgba(184, 134, 11, 0.6); overflow: hidden; }
         .card img { width: 100%; height: 100%; object-fit: cover; }
-        .card-back { 
-            background: #8b0000; border: 3px solid #ffd700;
-            background-image: repeating-linear-gradient(45deg, #8b0000, #8b0000 10px, #a52a2a 10px, #a52a2a 20px);
-        }
+        .card-back { background: #8b0000; border: 2px solid #ffd700; background-image: repeating-linear-gradient(45deg, #8b0000, #8b0000 10px, #a52a2a 10px, #a52a2a 20px); }
 
-        /* 金塊ボタン */
         .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin: 20px auto; }
-        .btn { 
-            flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #b8860b;
-            font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s;
-            background: var(--gold); color: #222; position: relative; overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        .btn::after {
-            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: linear-gradient(rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-            transform: rotate(45deg); animation: shine 3s infinite;
-        }
-        @keyframes shine { 0% { left: -150%; } 100% { left: 150%; } }
-        .btn:disabled { background: #333; color: #666; border-color: #444; }
-        .btn:disabled::after { display: none; }
+        .btn { flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #b8860b; font-size: 1.2rem; font-weight: bold; cursor: pointer; background: var(--gold); color: #222; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .btn:disabled { background: #333; color: #666; border-color: #444; box-shadow: none; }
+        .btn:active:not(:disabled) { transform: translateY(2px); }
 
         .overlay { position: fixed; inset: 0; background: #051a05; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 20px; }
+        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 20px; width: 70%; }
     </style>
 </head>
 <body>
 
 <div id="setup-overlay" class="overlay">
-    <h1 style="color:#ffd700; font-size: 2.5rem; letter-spacing: 4px;">ROYAL CASINO</h1>
-    <p style="color: #aaa; margin-bottom: 30px;">HIGH & LOW ONLINE</p>
+    <h1 style="color:#ffd700; font-size: 2rem; letter-spacing: 4px;">ROYAL CASINO</h1>
     <input type="text" id="room-id" placeholder="ROOM ID" inputmode="latin">
     <div class="btn-group">
         <button class="btn" onclick="startOnline()">JOIN TABLE</button>
@@ -98,7 +60,7 @@
         </div>
     </div>
     
-    <div id="status">Waiting for connection...</div>
+    <div id="status">Connecting...</div>
 
     <div class="field">
         <div class="slot"><div id="p-slot"></div></div>
@@ -114,46 +76,68 @@
 <script>
     let ws;
     let room;
-    let myPlayerIndex = -1; // 0か1かを判定
+    let myPlayerIndex = -1; 
+    let pingInterval;
     const SERVER_URL = 'wss://high-low-game-i5xg.onrender.com';
 
     function startOnline() {
         room = document.getElementById('room-id').value;
         if(!room) return alert("IDを入力してください");
+        
+        connect();
+        document.getElementById('setup-overlay').style.display = 'none';
+    }
+
+    function connect() {
+        if(ws) ws.close();
         ws = new WebSocket(SERVER_URL);
+
         ws.onopen = () => {
+            console.log("Connected");
             ws.send(JSON.stringify({type: 'JOIN', room: room}));
-            document.getElementById('setup-overlay').style.display = 'none';
+            // 30秒ごとに信号を送って切断を防止
+            if(pingInterval) clearInterval(pingInterval);
+            pingInterval = setInterval(() => {
+                if(ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type: 'PING'}));
+            }, 30000);
         };
-        ws.onmessage = (e) => handleServerData(JSON.parse(e.data));
+
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            handleServerData(data);
+        };
+
+        ws.onclose = () => {
+            document.getElementById('status').innerText = "Reconnecting...";
+            setTimeout(connect, 3000); // 切れたら3秒後に再試行
+        };
     }
 
     function handleServerData(data) {
         const status = document.getElementById('status');
         
         switch(data.type) {
+            case 'ASSIGN_ID':
+                // サーバーから「お前は○番だ」と言われるので保存
+                myPlayerIndex = data.index;
+                break;
             case 'TURN':
-                // 初回のターンで、自分がPARENT(Player0)かCHILD(Player1)か判定して固定
-                if(myPlayerIndex === -1) {
-                    myPlayerIndex = (data.role === 'PARENT') ? 0 : 1;
-                }
                 updateUI(data);
                 break;
             case 'RESULT':
                 revealResult(data);
                 break;
             case 'WAITING':
-                status.innerText = "WAITING FOR OPPONENT...";
+                status.innerText = "WAITING FOR OPPONENT...\n(ROOM: " + room + ")";
                 break;
             case 'START':
-                status.innerText = "GAME START!";
+                status.innerText = "PLAYER JOINED! STARTING...";
                 break;
         }
     }
 
     function updateUI(data) {
-        // スコアの更新（myPlayerIndexに基づいて自分の点数を"YOU"に表示）
-        if(data.scores) {
+        if(data.scores && myPlayerIndex !== -1) {
             document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
             document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
         }
@@ -164,14 +148,13 @@
         cSlot.innerHTML = `<div class="card card-back"></div>`;
 
         if(data.role === 'CHILD') {
-            document.getElementById('status').innerText = "YOUR TURN: HIGH OR LOW?";
+            status.innerText = "YOUR TURN: HIGH OR LOW?";
             document.getElementById('h-btn').disabled = false;
             document.getElementById('l-btn').disabled = false;
             document.getElementById('box-me').classList.add('active');
             document.getElementById('box-opp').classList.remove('active');
-            if(window.navigator.vibrate) window.navigator.vibrate(50);
         } else {
-            document.getElementById('status').innerText = "OPPONENT'S TURN...";
+            status.innerText = "OPPONENT'S TURN...";
             document.getElementById('h-btn').disabled = true;
             document.getElementById('l-btn').disabled = true;
             document.getElementById('box-opp').classList.add('active');
@@ -183,8 +166,7 @@
         const cSlot = document.getElementById('c-slot');
         cSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}"></div>`;
         
-        // スコア速報
-        if(data.scores) {
+        if(data.scores && myPlayerIndex !== -1) {
             document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
             document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
         }
@@ -194,9 +176,11 @@
     }
 
     function predict(choice) {
-        ws.send(JSON.stringify({type: 'PREDICT', room: room, choice: choice}));
-        document.getElementById('h-btn').disabled = true;
-        document.getElementById('l-btn').disabled = true;
+        if(ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({type: 'PREDICT', room: room, choice: choice}));
+            document.getElementById('h-btn').disabled = true;
+            document.getElementById('l-btn').disabled = true;
+        }
     }
 
     function getCardFile(n) {
