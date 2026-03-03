@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Royal High & Low - Luxury Edition</title>
+    <title>Royal High & Low - Auto Flow</title>
     <style>
         :root { 
             --card-w: 28vw; --card-h: 42vw; 
@@ -13,45 +13,27 @@
         }
         @media (min-width: 600px) { :root { --card-w: 140px; --card-h: 200px; } }
         body { font-family: 'Georgia', serif; background: var(--dark-green); color: white; margin: 0; overflow: hidden; text-align: center; }
-        
-        /* UIパーツ */
         .score-board { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; background: rgba(0,0,0,0.7); border-bottom: 2px solid #b8860b; }
         .score-box { flex: 1; transition: 0.4s; opacity: 0.5; }
         .score-box.active { opacity: 1; transform: scale(1.1); color: var(--gold-solid); }
         .score-val { font-size: 2rem; font-weight: bold; }
         #status-msg { margin: 15px 10px; font-size: 1.1rem; height: 3.5rem; color: var(--gold-solid); font-weight: bold; }
-
-        /* フィールドとカード */
         .field { display: flex; gap: 20px; margin: 10px 0; justify-content: center; position: relative; perspective: 1000px; }
         .slot { width: var(--card-w); height: var(--card-h); border: 1px solid rgba(184, 134, 11, 0.4); border-radius: 12px; position: relative; background: rgba(0,0,0,0.3); }
-        
-        .card { 
-            position: absolute; width: 100%; height: 100%; border-radius: 10px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 0 2px rgba(184, 134, 11, 0.6); 
-            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s;
-            transform-style: preserve-3d;
-        }
+        .card { position: absolute; width: 100%; height: 100%; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 0 2px rgba(184, 134, 11, 0.6); transition: transform 0.6s; transform-style: preserve-3d; }
         .card img { width: 100%; height: 100%; object-fit: cover; backface-visibility: hidden; }
         .card-back { background: #8b0000; border: 2px solid #ffd700; background-image: repeating-linear-gradient(45deg, #8b0000, #8b0000 10px, #a52a2a 10px, #a52a2a 20px); backface-visibility: hidden; }
-
-        /* アニメーション用クラス */
         .dealing { transform: translateY(-100vh) rotate(20deg); opacity: 0; }
-        
-        /* めくるボタン */
-        #flip-btn-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; display: none; }
-        .btn-open { background: var(--gold); color: #222; padding: 15px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 20px rgba(255,215,0,0.5); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-        /* 既存のボタン・オーバーレイ */
         .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin: 20px auto; }
         .btn { flex: 1; padding: 18px; border-radius: 8px; border: 1px solid #b8860b; font-size: 1.3rem; font-weight: bold; background: var(--gold); color: #222; cursor: pointer; }
         .btn:disabled { background: #333; color: #666; border-color: #444; }
-        .overlay, .winner-overlay, .fled-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .overlay { background: #051a05; }
+        .overlay, .winner-overlay, .fled-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #051a05; }
         .winner-overlay { background: rgba(0,0,0,0.95); display: none; }
         .fled-overlay { background: rgba(139, 0, 0, 0.95); display: none; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 20px; width: 70%; }
         #prediction-tag { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; padding: 10px 20px; border-radius: 50px; font-weight: bold; display: none; background: rgba(0,0,0,0.8); border: 2px solid var(--gold-solid); }
+        @keyframes flash { 0% { background: var(--dark-green); } 50% { background: #1b5e20; } 100% { background: var(--dark-green); } }
+        .win-flash { animation: flash 0.5s; }
+        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 20px; width: 70%; }
     </style>
 </head>
 <body>
@@ -80,7 +62,6 @@
     </div>
     <div id="status-msg">Establishing connection...</div>
     <div class="field">
-        <div id="flip-btn-container"><button class="btn-open" onclick="openCard()">OPEN CARD</button></div>
         <div id="prediction-tag"></div>
         <div class="slot" id="p-slot"></div><div class="slot" id="c-slot"></div>
     </div>
@@ -117,55 +98,49 @@
         switch(data.type) {
             case 'ASSIGN_ID': myIndex = data.index; break;
             case 'OPPONENT_LEFT': document.getElementById('fled-overlay').style.display = 'flex'; break;
-            case 'TURN_START': prepareTable(data.role); break;
-            case 'CARD_OPENED': revealParentCard(data.card); break;
+            case 'TURN': autoDealAndFlip(data); break;
             case 'RESULT': handleResult(data); break;
             case 'WAITING': document.getElementById('status-msg').innerText = "WAITING FOR OPPONENT..."; break;
-            case 'START': document.getElementById('status-msg').innerText = "DEALING CARDS..."; break;
+            case 'START': document.getElementById('status-msg').innerText = "GAME STARTING..."; break;
         }
     }
 
-    function prepareTable(role) {
+    function autoDealAndFlip(data) {
         document.getElementById('prediction-tag').style.display = 'none';
         document.getElementById('h-btn').disabled = true;
         document.getElementById('l-btn').disabled = true;
-        
+
+        const isChild = (data.role === 'CHILD');
+        document.getElementById('box-me').className = isChild ? 'score-box active' : 'score-box';
+        document.getElementById('box-opp').className = isChild ? 'score-box' : 'score-box active';
+
         const pSlot = document.getElementById('p-slot');
         const cSlot = document.getElementById('c-slot');
         pSlot.innerHTML = `<div class="card card-back dealing" id="p-card-obj"></div>`;
         cSlot.innerHTML = `<div class="card card-back dealing"></div>`;
 
+        // 1. カードが配られる（滑り込み）
         setTimeout(() => {
             document.querySelectorAll('.card').forEach(c => c.classList.remove('dealing'));
         }, 100);
 
-        const isParent = (role === 'PARENT');
-        document.getElementById('status-msg').innerText = isParent ? "YOU ARE PARENT: OPEN THE CARD" : "OPPONENT IS PARENT: WAITING...";
-        document.getElementById('flip-btn-container').style.display = isParent ? 'block' : 'none';
-        document.getElementById('box-me').className = isParent ? 'score-box active' : 'score-box';
-        document.getElementById('box-opp').className = isParent ? 'score-box' : 'score-box active';
-    }
-
-    function openCard() {
-        ws.send(JSON.stringify({type: 'OPEN_CARD', room: room}));
-        document.getElementById('flip-btn-container').style.display = 'none';
-    }
-
-    function revealParentCard(cardCode) {
-        const pCardObj = document.getElementById('p-card-obj');
-        pCardObj.style.transform = "rotateY(90deg)";
+        // 2. 自動でめくる
         setTimeout(() => {
-            pCardObj.innerHTML = `<img src="images/png/${getCardFile(cardCode)}">`;
-            pCardObj.classList.remove('card-back');
-            pCardObj.style.transform = "rotateY(0deg)";
-            
-            const isChild = !document.getElementById('box-me').classList.contains('active');
-            document.getElementById('status-msg').innerText = isChild ? "YOUR TURN: HIGH OR LOW?" : "OPPONENT IS PREDICTING...";
-            if (isChild) {
-                document.getElementById('h-btn').disabled = false;
-                document.getElementById('l-btn').disabled = false;
-            }
-        }, 300);
+            const pCardObj = document.getElementById('p-card-obj');
+            pCardObj.style.transform = "rotateY(90deg)";
+            setTimeout(() => {
+                pCardObj.innerHTML = `<img src="images/png/${getCardFile(data.card)}">`;
+                pCardObj.classList.remove('card-back');
+                pCardObj.style.transform = "rotateY(0deg)";
+                
+                document.getElementById('status-msg').innerText = isChild ? "YOUR TURN: HIGH OR LOW?" : "OPPONENT'S TURN...";
+                if (isChild) {
+                    document.getElementById('h-btn').disabled = false;
+                    document.getElementById('l-btn').disabled = false;
+                    if(window.navigator.vibrate) window.navigator.vibrate(50);
+                }
+            }, 300);
+        }, 800);
     }
 
     function predict(choice) {
@@ -178,13 +153,16 @@
 
     function handleResult(data) {
         document.getElementById('c-slot').innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}"></div>`;
-        document.getElementById('prediction-tag').style.display = 'block';
         document.getElementById('status-msg').innerHTML = data.win ? "<span style='color:#00ff00'>MATCH! +1 PT</span>" : "MISS...";
+        if (data.win) {
+            document.body.className = 'win-flash';
+            setTimeout(()=>document.body.className='', 500);
+        }
     }
 
     function showWinner(w) {
         document.getElementById('winner-overlay').style.display = 'flex';
-        document.getElementById('winner-msg').innerText = w === "YOU" ? "あなたが完全勝利しました！" : "対戦相手が勝利しました。";
+        document.getElementById('winner-msg').innerText = w === "YOU" ? "あなたが頂点に立ちました！" : "対戦相手が勝利しました。";
     }
 
     function getCardFile(n) {
