@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Royal High & Low - Auto Flow</title>
+    <title>Royal High & Low - BGM Edition</title>
     <style>
         :root { 
             --card-w: 28vw; --card-h: 42vw; 
@@ -37,6 +37,8 @@
     </style>
 </head>
 <body>
+
+<audio id="bgm" loop src="bgm.mp3"></audio>
 
 <div id="setup-overlay" class="overlay">
     <h1 style="color:#ffd700; font-size: 2.5rem; letter-spacing: 4px;">ROYAL CASINO</h1>
@@ -78,6 +80,12 @@
     function startOnline() {
         room = document.getElementById('room-id').value;
         if(!room) return alert("IDを入力してください");
+        
+        // BGM開始
+        const bgm = document.getElementById('bgm');
+        bgm.volume = 0.4;
+        bgm.play().catch(e => console.log("Audio permission needed"));
+
         connect();
         document.getElementById('setup-overlay').style.display = 'none';
     }
@@ -101,7 +109,6 @@
             case 'TURN': autoDealAndFlip(data); break;
             case 'RESULT': handleResult(data); break;
             case 'WAITING': document.getElementById('status-msg').innerText = "WAITING FOR OPPONENT..."; break;
-            case 'START': document.getElementById('status-msg').innerText = "GAME STARTING..."; break;
         }
     }
 
@@ -119,12 +126,10 @@
         pSlot.innerHTML = `<div class="card card-back dealing" id="p-card-obj"></div>`;
         cSlot.innerHTML = `<div class="card card-back dealing"></div>`;
 
-        // 1. カードが配られる（滑り込み）
         setTimeout(() => {
             document.querySelectorAll('.card').forEach(c => c.classList.remove('dealing'));
         }, 100);
 
-        // 2. 自動でめくる
         setTimeout(() => {
             const pCardObj = document.getElementById('p-card-obj');
             pCardObj.style.transform = "rotateY(90deg)";
@@ -132,7 +137,6 @@
                 pCardObj.innerHTML = `<img src="images/png/${getCardFile(data.card)}">`;
                 pCardObj.classList.remove('card-back');
                 pCardObj.style.transform = "rotateY(0deg)";
-                
                 document.getElementById('status-msg').innerText = isChild ? "YOUR TURN: HIGH OR LOW?" : "OPPONENT'S TURN...";
                 if (isChild) {
                     document.getElementById('h-btn').disabled = false;
@@ -153,16 +157,18 @@
 
     function handleResult(data) {
         document.getElementById('c-slot').innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}"></div>`;
-        document.getElementById('status-msg').innerHTML = data.win ? "<span style='color:#00ff00'>MATCH! +1 PT</span>" : "MISS...";
         if (data.win) {
+            document.getElementById('status-msg').innerHTML = "<span style='color:#00ff00'>MATCH! +1 PT</span>";
             document.body.className = 'win-flash';
             setTimeout(()=>document.body.className='', 500);
+        } else {
+            document.getElementById('status-msg').innerText = "MISS...";
         }
     }
 
     function showWinner(w) {
         document.getElementById('winner-overlay').style.display = 'flex';
-        document.getElementById('winner-msg').innerText = w === "YOU" ? "あなたが頂点に立ちました！" : "対戦相手が勝利しました。";
+        document.getElementById('winner-msg').innerText = w === "YOU" ? "あなたが完全勝利しました！" : "対戦相手が勝利しました。";
     }
 
     function getCardFile(n) {
