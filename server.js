@@ -33,16 +33,6 @@ wss.on("connection", (ws) => {
             }
         }
 
-        // 親がカードをめくる処理
-        if (data.type === "OPEN_CARD") {
-            const room = rooms[rid];
-            if (!room || room.players[room.parentIdx] !== ws) return;
-            room.players.forEach(p => p.send(JSON.stringify({
-                type: "CARD_OPENED",
-                card: room.currentPCard
-            })));
-        }
-
         if (data.type === "PREDICT") {
             const room = rooms[rid];
             if (!room) return;
@@ -82,8 +72,9 @@ function sendTurn(rid) {
     room.currentPCard = Math.floor(Math.random() * 52) + 1;
     room.players.forEach((client, index) => {
         client.send(JSON.stringify({
-            type: "TURN_START", 
+            type: "TURN", 
             role: (index === room.parentIdx ? "PARENT" : "CHILD"),
+            card: room.currentPCard,
             scores: room.scores
         }));
     });
