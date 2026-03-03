@@ -33,6 +33,16 @@ wss.on("connection", (ws) => {
             }
         }
 
+        // 親がカードをめくる処理
+        if (data.type === "OPEN_CARD") {
+            const room = rooms[rid];
+            if (!room || room.players[room.parentIdx] !== ws) return;
+            room.players.forEach(p => p.send(JSON.stringify({
+                type: "CARD_OPENED",
+                card: room.currentPCard
+            })));
+        }
+
         if (data.type === "PREDICT") {
             const room = rooms[rid];
             if (!room) return;
@@ -41,7 +51,7 @@ wss.on("connection", (ws) => {
             const win = ((data.choice === "HIGH" && ((cCard-1)%13+1) > ((pCard-1)%13+1)) || 
                          (data.choice === "LOW" && ((cCard-1)%13+1) < ((pCard-1)%13+1)));
             
-            if (win) room.scores[1 - room.parentIdx] += 1; // 1点ずつ加算
+            if (win) room.scores[1 - room.parentIdx] += 1;
 
             room.players.forEach(p => p.send(JSON.stringify({
                 type: "RESULT", card: cCard, scores: room.scores, win: win, choice: data.choice
@@ -60,7 +70,6 @@ wss.on("connection", (ws) => {
         const rid = ws.room;
         if (rooms[rid]) {
             rooms[rid].players = rooms[rid].players.filter(p => p !== ws);
-            // 相手が退出したことを残ったプレイヤーに即座に通知
             rooms[rid].players.forEach(p => p.send(JSON.stringify({ type: "OPPONENT_LEFT" })));
             if (rooms[rid].players.length === 0) delete rooms[rid];
         }
@@ -73,8 +82,9 @@ function sendTurn(rid) {
     room.currentPCard = Math.floor(Math.random() * 52) + 1;
     room.players.forEach((client, index) => {
         client.send(JSON.stringify({
-            type: "TURN", role: (index === room.parentIdx ? "PARENT" : "CHILD"),
-            card: room.currentPCard, scores: room.scores
+            type: "TURN_START", 
+            role: (index === room.parentIdx ? "PARENT" : "CHILD"),
+            scores: room.scores
         }));
     });
 }
