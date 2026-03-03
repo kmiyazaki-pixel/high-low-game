@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Royal High & Low - BGM Edition</title>
+    <title>Royal High & Low - Ultimate</title>
     <style>
         :root { 
             --card-w: 28vw; --card-h: 42vw; 
@@ -24,8 +24,8 @@
         .card img { width: 100%; height: 100%; object-fit: cover; backface-visibility: hidden; }
         .card-back { background: #8b0000; border: 2px solid #ffd700; background-image: repeating-linear-gradient(45deg, #8b0000, #8b0000 10px, #a52a2a 10px, #a52a2a 20px); backface-visibility: hidden; }
         .dealing { transform: translateY(-100vh) rotate(20deg); opacity: 0; }
-        .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin: 20px auto; }
-        .btn { flex: 1; padding: 18px; border-radius: 8px; border: 1px solid #b8860b; font-size: 1.3rem; font-weight: bold; background: var(--gold); color: #222; cursor: pointer; }
+        .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin: 10px auto; }
+        .btn { flex: 1; padding: 18px; border-radius: 8px; border: 1px solid #b8860b; font-size: 1.1rem; font-weight: bold; background: var(--gold); color: #222; cursor: pointer; }
         .btn:disabled { background: #333; color: #666; border-color: #444; }
         .overlay, .winner-overlay, .fled-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #051a05; }
         .winner-overlay { background: rgba(0,0,0,0.95); display: none; }
@@ -33,7 +33,7 @@
         #prediction-tag { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50; padding: 10px 20px; border-radius: 50px; font-weight: bold; display: none; background: rgba(0,0,0,0.8); border: 2px solid var(--gold-solid); }
         @keyframes flash { 0% { background: var(--dark-green); } 50% { background: #1b5e20; } 100% { background: var(--dark-green); } }
         .win-flash { animation: flash 0.5s; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 20px; width: 70%; }
+        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 10px; width: 70%; }
     </style>
 </head>
 <body>
@@ -41,94 +41,141 @@
 <audio id="bgm" loop src="jazz.mp3"></audio>
 
 <div id="setup-overlay" class="overlay">
-    <h1 style="color:#ffd700; font-size: 2.5rem; letter-spacing: 4px;">ROYAL CASINO</h1>
-    <input type="text" id="room-id" placeholder="ROOM ID" inputmode="latin">
-    <div class="btn-group"><button class="btn" onclick="startOnline()">JOIN TABLE</button></div>
-</div>
-
-<div id="fled-overlay" class="fled-overlay">
-    <h1>OPPONENT FLED!</h1>
-    <button class="btn" style="width:200px" onclick="location.reload()">REMATCH</button>
+    <h1 style="color:#ffd700; font-size: 2.5rem; letter-spacing: 4px; margin-bottom: 5px;">ROYAL CASINO</h1>
+    <p style="color:#aaa; font-size: 0.8rem; margin-bottom: 20px;">~ Strategy High & Low ~</p>
+    
+    <input type="text" id="room-id" placeholder="ENTER ROOM ID" inputmode="latin">
+    <div class="btn-group">
+        <button class="btn" onclick="startMode('ONLINE')">ONLINE BATTLE</button>
+        <button class="btn" style="background: #444; color:white; border-color:#666;" onclick="startMode('SOLO')">SOLO (vs CPU)</button>
+    </div>
 </div>
 
 <div id="winner-overlay" class="winner-overlay">
-    <div style="font-size:3rem; color:var(--gold-solid);">👑 CHAMPION</div>
+    <div id="winner-title" style="font-size:3rem; color:var(--gold-solid);">👑 CHAMPION</div>
     <p id="winner-msg" style="color:white; margin: 20px 0;"></p>
-    <button class="btn" style="width:200px" onclick="location.reload()">NEW GAME</button>
+    <button class="btn" style="max-width:200px" onclick="location.reload()">RETRY</button>
 </div>
 
 <div id="game-screen">
     <div class="score-board">
-        <div class="score-box" id="box-opp"><div style="font-size:0.7rem;">OPPONENT</div><div id="opp-score" class="score-val">0</div></div>
+        <div class="score-box" id="box-opp"><div id="label-opp" style="font-size:0.7rem;">OPPONENT</div><div id="opp-score" class="score-val">0</div></div>
         <div class="score-box" id="box-me"><div style="font-size:0.7rem;">YOU</div><div id="my-score" class="score-val">0</div></div>
     </div>
-    <div id="status-msg">Establishing connection...</div>
+    <div id="status-msg">Welcome to Royal Table</div>
     <div class="field">
         <div id="prediction-tag"></div>
         <div class="slot" id="p-slot"></div><div class="slot" id="c-slot"></div>
     </div>
     <div class="btn-group">
-        <button id="h-btn" class="btn" onclick="predict('HIGH')" disabled>HIGH</button>
-        <button id="l-btn" class="btn" onclick="predict('LOW')" disabled>LOW</button>
+        <button id="h-btn" class="btn" onclick="handlePredict('HIGH')" disabled>HIGH</button>
+        <button id="l-btn" class="btn" onclick="handlePredict('LOW')" disabled>LOW</button>
     </div>
 </div>
 
 <script>
-    let ws; let room; let myIndex = -1;
+    let ws; let room; let myIndex = 0; let isSolo = false;
+    let soloState = { scores: [0, 0], parentIdx: 0, currentPCard: 0 };
     const SERVER_URL = 'wss://high-low-game-i5xg.onrender.com';
 
-    function startOnline() {
-        room = document.getElementById('room-id').value;
-        if(!room) return alert("IDを入力してください");
-        
-        // BGM開始
+    function startMode(mode) {
+        if (mode === 'ONLINE') {
+            room = document.getElementById('room-id').value;
+            if(!room) return alert("IDを入力してください");
+            connect();
+        } else {
+            isSolo = true;
+            myIndex = 1; // あなたは常にPlayer 1
+            document.getElementById('label-opp').innerText = "CPU (LV.1)";
+            startSoloTurn();
+        }
         const bgm = document.getElementById('bgm');
-        bgm.volume = 0.4;
-        bgm.play().catch(e => console.log("Audio permission needed"));
-
-        connect();
+        bgm.volume = 0.3; bgm.play().catch(()=>{});
         document.getElementById('setup-overlay').style.display = 'none';
+    }
+
+    // --- SOLO MODE LOGIC ---
+    function startSoloTurn() {
+        soloState.currentPCard = Math.floor(Math.random() * 52) + 1;
+        const role = (soloState.parentIdx === 1) ? "PARENT" : "CHILD";
+        const data = { type: 'TURN', role: role, card: soloState.currentPCard, scores: soloState.scores };
+        autoDealAndFlip(data);
+
+        // CPUが子の時、自動で予想させる
+        if (role === "PARENT") {
+            setTimeout(() => {
+                const cpuChoice = Math.random() > 0.5 ? "HIGH" : "LOW";
+                handlePredict(cpuChoice);
+            }, 2500);
+        }
+    }
+
+    function handleSoloPredict(choice) {
+        const pCard = soloState.currentPCard;
+        const cCard = Math.floor(Math.random() * 52) + 1;
+        const pVal = (pCard-1)%13 + 1;
+        const cVal = (cCard-1)%13 + 1;
+        const win = (choice === "HIGH" && cVal > pVal) || (choice === "LOW" && cVal < pVal);
+        
+        if (win) soloState.scores[1 - soloState.parentIdx] += 1;
+        
+        const resData = { type: 'RESULT', card: cCard, scores: soloState.scores, win: win, choice: choice };
+        handleResult(resData);
+
+        if (soloState.scores[0] >= 10 || soloState.scores[1] >= 10) return;
+
+        setTimeout(() => {
+            soloState.parentIdx = 1 - soloState.parentIdx;
+            startSoloTurn();
+        }, 3000);
+    }
+
+    // --- SHARED LOGIC ---
+    function handlePredict(choice) {
+        if (isSolo) {
+            const isMyTurn = (soloState.parentIdx === 0); // Solo時は親がCPU(0)なら子があなた(1)
+            if (isMyTurn || soloState.parentIdx === 1) { // CPUの手番もここを通る
+                showPredictionTag(choice);
+                handleSoloPredict(choice);
+            }
+        } else {
+            ws.send(JSON.stringify({type: 'PREDICT', room: room, choice: choice}));
+            showPredictionTag(choice);
+        }
+        document.getElementById('h-btn').disabled = true;
+        document.getElementById('l-btn').disabled = true;
     }
 
     function connect() {
         ws = new WebSocket(SERVER_URL);
         ws.onopen = () => ws.send(JSON.stringify({type: 'JOIN', room: room}));
-        ws.onmessage = (e) => handleServerData(JSON.parse(e.data));
-    }
-
-    function handleServerData(data) {
-        if (data.scores && myIndex !== -1) {
-            const mS = data.scores[myIndex]; const oS = data.scores[1 - myIndex];
-            document.getElementById('my-score').innerText = mS;
-            document.getElementById('opp-score').innerText = oS;
-            if (mS >= 10) showWinner("YOU"); else if (oS >= 10) showWinner("OPPONENT");
-        }
-        switch(data.type) {
-            case 'ASSIGN_ID': myIndex = data.index; break;
-            case 'OPPONENT_LEFT': document.getElementById('fled-overlay').style.display = 'flex'; break;
-            case 'TURN': autoDealAndFlip(data); break;
-            case 'RESULT': handleResult(data); break;
-            case 'WAITING': document.getElementById('status-msg').innerText = "WAITING FOR OPPONENT..."; break;
-        }
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            if (data.type === 'ASSIGN_ID') myIndex = data.index;
+            if (data.type === 'OPPONENT_LEFT') alert("Opponent Fled!");
+            if (data.type === 'TURN') autoDealAndFlip(data);
+            if (data.type === 'RESULT') handleResult(data);
+            if (data.type === 'WAITING') document.getElementById('status-msg').innerText = "WAITING FOR OPPONENT...";
+        };
     }
 
     function autoDealAndFlip(data) {
         document.getElementById('prediction-tag').style.display = 'none';
-        document.getElementById('h-btn').disabled = true;
-        document.getElementById('l-btn').disabled = true;
-
-        const isChild = (data.role === 'CHILD');
-        document.getElementById('box-me').className = isChild ? 'score-box active' : 'score-box';
-        document.getElementById('box-opp').className = isChild ? 'score-box' : 'score-box active';
+        const isMeChild = (data.role === 'CHILD');
+        
+        // スコア更新
+        if (data.scores) {
+            document.getElementById('my-score').innerText = data.scores[myIndex];
+            document.getElementById('opp-score').innerText = data.scores[1 - myIndex];
+            checkWin(data.scores);
+        }
 
         const pSlot = document.getElementById('p-slot');
         const cSlot = document.getElementById('c-slot');
         pSlot.innerHTML = `<div class="card card-back dealing" id="p-card-obj"></div>`;
         cSlot.innerHTML = `<div class="card card-back dealing"></div>`;
 
-        setTimeout(() => {
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('dealing'));
-        }, 100);
+        setTimeout(() => document.querySelectorAll('.card').forEach(c => c.classList.remove('dealing')), 100);
 
         setTimeout(() => {
             const pCardObj = document.getElementById('p-card-obj');
@@ -137,26 +184,20 @@
                 pCardObj.innerHTML = `<img src="images/png/${getCardFile(data.card)}">`;
                 pCardObj.classList.remove('card-back');
                 pCardObj.style.transform = "rotateY(0deg)";
-                document.getElementById('status-msg').innerText = isChild ? "YOUR TURN: HIGH OR LOW?" : "OPPONENT'S TURN...";
-                if (isChild) {
+                document.getElementById('status-msg').innerText = isMeChild ? "YOUR TURN: HIGH OR LOW?" : "OPPONENT'S TURN...";
+                document.getElementById('box-me').className = isMeChild ? 'score-box active' : 'score-box';
+                document.getElementById('box-opp').className = isMeChild ? 'score-box' : 'score-box active';
+                if (isMeChild) {
                     document.getElementById('h-btn').disabled = false;
                     document.getElementById('l-btn').disabled = false;
-                    if(window.navigator.vibrate) window.navigator.vibrate(50);
                 }
             }, 300);
         }, 800);
     }
 
-    function predict(choice) {
-        ws.send(JSON.stringify({type: 'PREDICT', room: room, choice: choice}));
-        const tag = document.getElementById('prediction-tag');
-        tag.innerText = choice; tag.style.display = 'block';
-        tag.style.color = (choice === 'HIGH' ? '#ffeb3b' : '#03a9f4');
-        document.getElementById('h-btn').disabled = true; document.getElementById('l-btn').disabled = true;
-    }
-
     function handleResult(data) {
         document.getElementById('c-slot').innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}"></div>`;
+        showPredictionTag(data.choice);
         if (data.win) {
             document.getElementById('status-msg').innerHTML = "<span style='color:#00ff00'>MATCH! +1 PT</span>";
             document.body.className = 'win-flash';
@@ -164,11 +205,28 @@
         } else {
             document.getElementById('status-msg').innerText = "MISS...";
         }
+        // スコア同期(一人用)
+        if (isSolo) {
+            document.getElementById('my-score').innerText = data.scores[myIndex];
+            document.getElementById('opp-score').innerText = data.scores[1 - myIndex];
+            checkWin(data.scores);
+        }
+    }
+
+    function showPredictionTag(choice) {
+        const tag = document.getElementById('prediction-tag');
+        tag.innerText = choice; tag.style.display = 'block';
+        tag.style.color = (choice === 'HIGH' ? '#ffeb3b' : '#03a9f4');
+    }
+
+    function checkWin(scores) {
+        if (scores[myIndex] >= 10) showWinner("YOU");
+        else if (scores[1-myIndex] >= 10) showWinner("OPPONENT");
     }
 
     function showWinner(w) {
         document.getElementById('winner-overlay').style.display = 'flex';
-        document.getElementById('winner-msg').innerText = w === "YOU" ? "あなたが完全勝利しました！" : "対戦相手が勝利しました。";
+        document.getElementById('winner-msg').innerText = w === "YOU" ? "あなたがこのテーブルを支配しました！" : "CPUが勝利。リベンジしますか？";
     }
 
     function getCardFile(n) {
