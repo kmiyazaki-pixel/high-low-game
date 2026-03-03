@@ -3,193 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Royal High & Low Online - Stable</title>
+    <title>Royal High & Low - Luxury Edition</title>
     <style>
-        :root { --card-w: 28vw; --card-h: 42vw; --gold: #ffd700; }
-        @media (min-width: 600px) { :root { --card-w: 130px; --card-h: 190px; } }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #071a08; color: white; margin: 0; overflow: hidden; text-align: center; }
-        #game-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; background: radial-gradient(circle, #1b5e20, #071a08); }
-        
-        /* スコアエリア */
-        .score-board { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--gold); }
-        .score-box { flex: 1; }
-        .score-label { font-size: 0.8rem; color: #aaa; }
-        .score-val { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+        :root { 
+            --card-w: 28vw; --card-h: 42vw; 
+            --gold: linear-gradient(135deg, #f9d423 0%, #ffdb6e 50%, #b8860b 100%);
+            --gold-solid: #ffd700;
+            --dark-green: radial-gradient(circle, #1b5e20 0%, #051a05 100%);
+        }
+        @media (min-width: 600px) { :root { --card-w: 140px; --card-h: 200px; } }
 
-        #status { margin: 15px 10px; font-weight: bold; color: var(--gold); height: 3.5rem; display: flex; align-items: center; justify-content: center; line-height: 1.2; }
+        body { 
+            font-family: 'Georgia', serif; 
+            background: var(--dark-green); color: white; margin: 0; 
+            overflow: hidden; text-align: center; 
+        }
 
-        .field { display: flex; gap: 20px; margin: 10px 0; }
-        .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.2); border-radius: 12px; position: relative; }
-        .slot-tag { position: absolute; top: -25px; width: 100%; font-size: 0.7rem; color: #888; }
+        /* 高級感のあるスコアボード */
+        .score-board { 
+            display: flex; justify-content: space-around; width: 100%; 
+            padding: 20px 0; background: rgba(0,0,0,0.5); 
+            border-bottom: 2px solid #b8860b; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .score-box { flex: 1; transition: transform 0.3s; }
+        .score-box.active { transform: scale(1.1); color: var(--gold-solid); }
+        .score-label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: #aaa; }
+        .score-val { font-size: 1.8rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
-        .card { position: absolute; width: 100%; height: 100%; border-radius: 10px; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1); transform-style: preserve-3d; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
-        .card-back { background: #b71c1c; border: 2px solid #eee; background-image: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 5px, #d32f2f 5px, #d32f2f 10px); }
-        
-        .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin-top: 10px; }
-        .btn { flex: 1; padding: 18px; border-radius: 50px; border: none; font-size: 1.3rem; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        .btn-gold { background: linear-gradient(135deg, #ffd700, #ffb300); color: #222; }
-        .btn:disabled { background: #444 !important; color: #777; transform: none; box-shadow: none; }
+        #status { 
+            margin: 20px 10px; font-size: 1.1rem; font-weight: bold; height: 3rem;
+            color: var(--gold-solid); text-shadow: 0 0 10px rgba(255,215,0,0.3);
+        }
 
-        .overlay { position: fixed; inset: 0; background: #071a08; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 10px; border: 1px solid var(--gold); margin-bottom: 25px; text-align: center; width: 75%; background: #111; color: white; }
+        /* トランプの豪華な装飾 */
+        .field { display: flex; gap: 25px; margin: 10px 0; justify-content: center; }
+        .slot { 
+            width: var(--card-w); height: var(--card-h); 
+            border: 1px solid rgba(184, 134, 11, 0.3); border-radius: 12px; 
+            position: relative; background: rgba(0,0,0,0.2);
+        }
+        .card { 
+            position: absolute; width: 100%; height: 100%; border-radius: 10px; 
+            transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 0 0 3px rgba(184, 134, 11, 0.8);
+            overflow: hidden;
+        }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        .card-back { 
+            background: #8b0000; border: 3px solid #ffd700;
+            background-image: repeating-linear-gradient(45deg, #8b0000, #8b0000 10px, #a52a2a 10px, #a52a2a 20px);
+        }
+
+        /* 金塊ボタン */
+        .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin: 20px auto; }
+        .btn { 
+            flex: 1; padding: 15px; border-radius: 8px; border: 1px solid #b8860b;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.3s;
+            background: var(--gold); color: #222; position: relative; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .btn::after {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(45deg); animation: shine 3s infinite;
+        }
+        @keyframes shine { 0% { left: -150%; } 100% { left: 150%; } }
+        .btn:disabled { background: #333; color: #666; border-color: #444; }
+        .btn:disabled::after { display: none; }
+
+        .overlay { position: fixed; inset: 0; background: #051a05; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        input { padding: 15px; font-size: 1.2rem; border-radius: 5px; border: 2px solid #b8860b; background: #111; color: white; text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div id="setup-overlay" class="overlay">
-    <h1 style="color:var(--gold); letter-spacing: 5px; font-size: 2rem;">ROYAL<br>HIGH & LOW</h1>
-    <p style="color: #888; margin-bottom: 30px;">Enter Room ID to play</p>
-    <input type="text" id="room-id" placeholder="Room ID" inputmode="latin">
+    <h1 style="color:#ffd700; font-size: 2.5rem; letter-spacing: 4px;">ROYAL CASINO</h1>
+    <p style="color: #aaa; margin-bottom: 30px;">HIGH & LOW ONLINE</p>
+    <input type="text" id="room-id" placeholder="ROOM ID" inputmode="latin">
     <div class="btn-group">
-        <button class="btn btn-gold" onclick="startOnline()">ENTER ROOM</button>
+        <button class="btn" onclick="startOnline()">JOIN TABLE</button>
     </div>
 </div>
 
 <div id="game-screen">
     <div class="score-board">
-        <div class="score-box">
-            <div class="score-label">OPPONENT</div>
+        <div class="score-box" id="box-opp">
+            <div class="score-label">Opponent</div>
             <div id="opp-score" class="score-val">0</div>
         </div>
-        <div class="score-box">
-            <div class="score-label">YOU</div>
+        <div class="score-box" id="box-me">
+            <div class="score-label">You</div>
             <div id="my-score" class="score-val">0</div>
         </div>
     </div>
     
-    <div id="status">Connecting to server...</div>
+    <div id="status">Waiting for connection...</div>
 
     <div class="field">
-        <div class="slot">
-            <div class="slot-tag">PARENT (親)</div>
-            <div id="p-slot"></div>
-        </div>
-        <div class="slot">
-            <div class="slot-tag">CHILD (子)</div>
-            <div id="c-slot"></div>
-        </div>
+        <div class="slot"><div id="p-slot"></div></div>
+        <div class="slot"><div id="c-slot"></div></div>
     </div>
 
     <div class="btn-group">
-        <button id="h-btn" class="btn btn-gold" onclick="predict('HIGH')" disabled>HIGH</button>
-        <button id="l-btn" class="btn btn-gold" onclick="predict('LOW')" disabled>LOW</button>
+        <button id="h-btn" class="btn" onclick="predict('HIGH')" disabled>HIGH</button>
+        <button id="l-btn" class="btn" onclick="predict('LOW')" disabled>LOW</button>
     </div>
-    
-    <p style="font-size: 0.7rem; color: #555; margin-top: 20px;">Render Online Server: Active</p>
 </div>
 
 <script>
     let ws;
     let room;
-    let myIndex = -1; // サーバーが割り当てるプレイヤー番号(0 or 1)
+    let myPlayerIndex = -1; // 0か1かを判定
     const SERVER_URL = 'wss://high-low-game-i5xg.onrender.com';
 
     function startOnline() {
         room = document.getElementById('room-id').value;
         if(!room) return alert("IDを入力してください");
-
-        document.getElementById('status').innerText = "Establishing connection...";
         ws = new WebSocket(SERVER_URL);
-
         ws.onopen = () => {
             ws.send(JSON.stringify({type: 'JOIN', room: room}));
             document.getElementById('setup-overlay').style.display = 'none';
         };
-
-        ws.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            handleServerData(data);
-        };
-
-        ws.onclose = () => {
-            document.getElementById('status').innerText = "Disconnected. Reconnecting...";
-            setTimeout(startOnline, 3000); // 3秒後に再接続試行
-        };
+        ws.onmessage = (e) => handleServerData(JSON.parse(e.data));
     }
 
     function handleServerData(data) {
         const status = document.getElementById('status');
         
         switch(data.type) {
-            case 'WAITING':
-                status.innerText = "Waiting for an opponent...\nShare Room ID: " + room;
-                break;
-                
-            case 'START':
-                status.innerText = "Opponent joined! Game starting...";
-                break;
-                
             case 'TURN':
-                // 自分がPlayer 0か1かを最初に覚える
-                if(myIndex === -1) {
-                    // サーバーがroleを送ってくる際の判別ロジック（初回のみ設定）
-                    // 実際はサーバー側で"PLAYER_INDEX"を送るのが理想ですが、
-                    // 現状の構成ではroleを受け取った時点で判定します。
+                // 初回のターンで、自分がPARENT(Player0)かCHILD(Player1)か判定して固定
+                if(myPlayerIndex === -1) {
+                    myPlayerIndex = (data.role === 'PARENT') ? 0 : 1;
                 }
-                updateScores(data.scores);
-                renderTurn(data);
+                updateUI(data);
                 break;
-                
             case 'RESULT':
-                updateScores(data.scores);
                 revealResult(data);
+                break;
+            case 'WAITING':
+                status.innerText = "WAITING FOR OPPONENT...";
+                break;
+            case 'START':
+                status.innerText = "GAME START!";
                 break;
         }
     }
 
-    function renderTurn(data) {
+    function updateUI(data) {
+        // スコアの更新（myPlayerIndexに基づいて自分の点数を"YOU"に表示）
+        if(data.scores) {
+            document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
+            document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
+        }
+
         const pSlot = document.getElementById('p-slot');
         const cSlot = document.getElementById('c-slot');
-        
-        // 親のカードを表示
-        pSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}" width="100%" style="border-radius:10px;"></div>`;
-        // 子のカードは裏向き
+        pSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}"></div>`;
         cSlot.innerHTML = `<div class="card card-back"></div>`;
 
         if(data.role === 'CHILD') {
-            document.getElementById('status').innerHTML = "YOUR TURN!<br>Is your card High or Low?";
+            document.getElementById('status').innerText = "YOUR TURN: HIGH OR LOW?";
             document.getElementById('h-btn').disabled = false;
             document.getElementById('l-btn').disabled = false;
-            // 触覚フィードバック（スマホのみ）
+            document.getElementById('box-me').classList.add('active');
+            document.getElementById('box-opp').classList.remove('active');
             if(window.navigator.vibrate) window.navigator.vibrate(50);
         } else {
-            document.getElementById('status').innerText = "PARENT ROLE\nWaiting for opponent's prediction...";
+            document.getElementById('status').innerText = "OPPONENT'S TURN...";
             document.getElementById('h-btn').disabled = true;
             document.getElementById('l-btn').disabled = true;
+            document.getElementById('box-opp').classList.add('active');
+            document.getElementById('box-me').classList.remove('active');
         }
+    }
+
+    function revealResult(data) {
+        const cSlot = document.getElementById('c-slot');
+        cSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}"></div>`;
+        
+        // スコア速報
+        if(data.scores) {
+            document.getElementById('my-score').innerText = data.scores[myPlayerIndex];
+            document.getElementById('opp-score').innerText = data.scores[1 - myPlayerIndex];
+        }
+
+        const status = document.getElementById('status');
+        status.innerHTML = data.win ? "<span style='color:#00ff00'>WIN! +2 PTS</span>" : "<span style='color:#ff4444'>LOSE...</span>";
     }
 
     function predict(choice) {
         ws.send(JSON.stringify({type: 'PREDICT', room: room, choice: choice}));
         document.getElementById('h-btn').disabled = true;
         document.getElementById('l-btn').disabled = true;
-        document.getElementById('status').innerText = "Checking...";
-    }
-
-    function revealResult(data) {
-        const cSlot = document.getElementById('c-slot');
-        // 子のカードをめくる
-        cSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}" width="100%" style="border-radius:10px;"></div>`;
-        
-        const status = document.getElementById('status');
-        if(data.win) {
-            status.innerHTML = "<span style='color:#00ff00'>MATCH! +2 POINTS</span>";
-        } else {
-            status.innerHTML = "<span style='color:#ff4444'>MISS...</span>";
-        }
-    }
-
-    function updateScores(scores) {
-        if(!scores) return;
-        // サーバーが[Player1Score, Player2Score]を送ってくる想定
-        // 自分がどちらかは最初のターンのroleで判定（簡易版）
-        if(myIndex === -1) {
-            // roleが送られてきた時、自分がどちらか固定する仕組みが必要ですが、
-            // 今回は便宜上、左をPlayer0, 右をPlayer1として描画します。
-        }
-        // ここでは暫定的に、scores[0]と[1]を表示
-        document.getElementById('opp-score').innerText = scores[0];
-        document.getElementById('my-score').innerText = scores[1];
     }
 
     function getCardFile(n) {
@@ -197,8 +204,7 @@
         const suit = suits[Math.floor((n-1)/13)];
         let val = (n-1) % 13 + 1;
         const names = {1:'ace', 11:'jack', 12:'queen', 13:'king'};
-        const valName = names[val] || val;
-        return `${valName}_of_${suit}.png`;
+        return `${names[val] || val}_of_${suit}.png`;
     }
 </script>
 </body>
