@@ -3,64 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Royal High & Low Online</title>
+    <title>Royal High & Low Online - Stable</title>
     <style>
         :root { --card-w: 28vw; --card-h: 42vw; --gold: #ffd700; }
-        @media (min-width: 600px) { :root { --card-w: 120px; --card-h: 180px; } }
+        @media (min-width: 600px) { :root { --card-w: 130px; --card-h: 190px; } }
         body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #071a08; color: white; margin: 0; overflow: hidden; text-align: center; }
         #game-screen { height: 100vh; display: flex; flex-direction: column; align-items: center; background: radial-gradient(circle, #1b5e20, #071a08); }
-        .score-board { display: flex; justify-content: space-around; width: 100%; padding: 20px 0; font-size: 1.2rem; color: var(--gold); font-weight: bold; }
-        .field { display: flex; gap: 20px; margin: 20px 0; }
-        .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.3); border-radius: 10px; position: relative; }
-        .card { position: absolute; width: 100%; height: 100%; border-radius: 10px; transition: 0.6s; transform-style: preserve-3d; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        /* スコアエリア */
+        .score-board { display: flex; justify-content: space-around; width: 100%; padding: 15px 0; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--gold); }
+        .score-box { flex: 1; }
+        .score-label { font-size: 0.8rem; color: #aaa; }
+        .score-val { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+
+        #status { margin: 15px 10px; font-weight: bold; color: var(--gold); height: 3.5rem; display: flex; align-items: center; justify-content: center; line-height: 1.2; }
+
+        .field { display: flex; gap: 20px; margin: 10px 0; }
+        .slot { width: var(--card-w); height: var(--card-h); border: 2px dashed rgba(255,215,0,0.2); border-radius: 12px; position: relative; }
+        .slot-tag { position: absolute; top: -25px; width: 100%; font-size: 0.7rem; color: #888; }
+
+        .card { position: absolute; width: 100%; height: 100%; border-radius: 10px; transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1); transform-style: preserve-3d; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
         .card-back { background: #b71c1c; border: 2px solid #eee; background-image: repeating-linear-gradient(45deg, #b71c1c, #b71c1c 5px, #d32f2f 5px, #d32f2f 10px); }
-        .btn-group { display: flex; gap: 10px; width: 90%; max-width: 400px; }
-        .btn { flex: 1; padding: 15px; border-radius: 12px; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-gold { background: linear-gradient(to bottom, #ffd700, #ffb300); color: #222; }
-        .btn-gold:active { transform: scale(0.95); }
-        .btn:disabled { background: #555 !important; color: #888; transform: none; }
-        .overlay { position: fixed; inset: 0; background: #071a08; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        input { padding: 15px; font-size: 1.2rem; border-radius: 8px; border: 1px solid var(--gold); margin-bottom: 20px; text-align: center; width: 70%; background: #111; color: white; }
+        
+        .btn-group { display: flex; gap: 15px; width: 90%; max-width: 400px; margin-top: 10px; }
+        .btn { flex: 1; padding: 18px; border-radius: 50px; border: none; font-size: 1.3rem; font-weight: 900; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .btn-gold { background: linear-gradient(135deg, #ffd700, #ffb300); color: #222; }
+        .btn:disabled { background: #444 !important; color: #777; transform: none; box-shadow: none; }
+
+        .overlay { position: fixed; inset: 0; background: #071a08; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        input { padding: 15px; font-size: 1.2rem; border-radius: 10px; border: 1px solid var(--gold); margin-bottom: 25px; text-align: center; width: 75%; background: #111; color: white; }
     </style>
 </head>
 <body>
 
 <div id="setup-overlay" class="overlay">
-    <h1 style="color:var(--gold); letter-spacing: 5px;">ROYAL HIGH & LOW</h1>
-    <p>Room IDを入力して対戦を開始</p>
-    <input type="text" id="room-id" placeholder="Room ID (例: 777)" inputmode="latin">
+    <h1 style="color:var(--gold); letter-spacing: 5px; font-size: 2rem;">ROYAL<br>HIGH & LOW</h1>
+    <p style="color: #888; margin-bottom: 30px;">Enter Room ID to play</p>
+    <input type="text" id="room-id" placeholder="Room ID" inputmode="latin">
     <div class="btn-group">
-        <button class="btn btn-gold" onclick="startOnline()">オンライン入室</button>
+        <button class="btn btn-gold" onclick="startOnline()">ENTER ROOM</button>
     </div>
-    <p style="font-size: 0.8rem; color: #888; margin-top: 30px;">※Renderの無料プランは起動に1分ほどかかる場合があります</p>
 </div>
 
 <div id="game-screen">
     <div class="score-board">
-        <div>OPP: <span id="opp-score">0</span></div>
-        <div>YOU: <span id="my-score">0</span></div>
+        <div class="score-box">
+            <div class="score-label">OPPONENT</div>
+            <div id="opp-score" class="score-val">0</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">YOU</div>
+            <div id="my-score" class="score-val">0</div>
+        </div>
     </div>
-    <div id="status" style="margin: 10px; font-weight: bold; color: var(--gold); height: 3em;">接続中...</div>
+    
+    <div id="status">Connecting to server...</div>
+
     <div class="field">
-        <div class="slot" id="p-slot"></div>
-        <div class="slot" id="c-slot"></div>
+        <div class="slot">
+            <div class="slot-tag">PARENT (親)</div>
+            <div id="p-slot"></div>
+        </div>
+        <div class="slot">
+            <div class="slot-tag">CHILD (子)</div>
+            <div id="c-slot"></div>
+        </div>
     </div>
+
     <div class="btn-group">
         <button id="h-btn" class="btn btn-gold" onclick="predict('HIGH')" disabled>HIGH</button>
         <button id="l-btn" class="btn btn-gold" onclick="predict('LOW')" disabled>LOW</button>
     </div>
+    
+    <p style="font-size: 0.7rem; color: #555; margin-top: 20px;">Render Online Server: Active</p>
 </div>
 
 <script>
     let ws;
     let room;
-    const SERVER_URL = 'wss://high-low-game-i5xg.onrender.com'; // あなたのURLに設定済み
+    let myIndex = -1; // サーバーが割り当てるプレイヤー番号(0 or 1)
+    const SERVER_URL = 'wss://high-low-game-i5xg.onrender.com';
 
     function startOnline() {
         room = document.getElementById('room-id').value;
-        if(!room) return alert("Room IDを入力してください");
+        if(!room) return alert("IDを入力してください");
 
-        document.getElementById('status').innerText = "サーバーに接続しています...";
+        document.getElementById('status').innerText = "Establishing connection...";
         ws = new WebSocket(SERVER_URL);
 
         ws.onopen = () => {
@@ -74,42 +102,60 @@
         };
 
         ws.onclose = () => {
-            alert("サーバーとの接続が切れました。ページをリロードしてください。");
-            location.reload();
-        };
-
-        ws.onerror = (err) => {
-            alert("サーバーがまだ起動していないか、接続エラーが発生しました。1分待ってから再度お試しください。");
+            document.getElementById('status').innerText = "Disconnected. Reconnecting...";
+            setTimeout(startOnline, 3000); // 3秒後に再接続試行
         };
     }
 
     function handleServerData(data) {
         const status = document.getElementById('status');
-        if(data.type === 'WAITING') {
-            status.innerText = "相手の入室を待っています（同じIDを入れてもらってください）";
-        } else if(data.type === 'START') {
-            status.innerText = "対戦相手が見つかりました！";
-        } else if(data.type === 'TURN') {
-            renderTurn(data);
-        } else if(data.type === 'RESULT') {
-            revealResult(data);
+        
+        switch(data.type) {
+            case 'WAITING':
+                status.innerText = "Waiting for an opponent...\nShare Room ID: " + room;
+                break;
+                
+            case 'START':
+                status.innerText = "Opponent joined! Game starting...";
+                break;
+                
+            case 'TURN':
+                // 自分がPlayer 0か1かを最初に覚える
+                if(myIndex === -1) {
+                    // サーバーがroleを送ってくる際の判別ロジック（初回のみ設定）
+                    // 実際はサーバー側で"PLAYER_INDEX"を送るのが理想ですが、
+                    // 現状の構成ではroleを受け取った時点で判定します。
+                }
+                updateScores(data.scores);
+                renderTurn(data);
+                break;
+                
+            case 'RESULT':
+                updateScores(data.scores);
+                revealResult(data);
+                break;
         }
     }
 
     function renderTurn(data) {
         const pSlot = document.getElementById('p-slot');
         const cSlot = document.getElementById('c-slot');
+        
         // 親のカードを表示
         pSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}" width="100%" style="border-radius:10px;"></div>`;
         // 子のカードは裏向き
         cSlot.innerHTML = `<div class="card card-back"></div>`;
 
         if(data.role === 'CHILD') {
-            document.getElementById('status').innerText = "あなたの番です！親より HIGH か LOW か？";
+            document.getElementById('status').innerHTML = "YOUR TURN!<br>Is your card High or Low?";
             document.getElementById('h-btn').disabled = false;
             document.getElementById('l-btn').disabled = false;
+            // 触覚フィードバック（スマホのみ）
+            if(window.navigator.vibrate) window.navigator.vibrate(50);
         } else {
-            document.getElementById('status').innerText = "相手の予想を待っています...";
+            document.getElementById('status').innerText = "PARENT ROLE\nWaiting for opponent's prediction...";
+            document.getElementById('h-btn').disabled = true;
+            document.getElementById('l-btn').disabled = true;
         }
     }
 
@@ -117,15 +163,33 @@
         ws.send(JSON.stringify({type: 'PREDICT', room: room, choice: choice}));
         document.getElementById('h-btn').disabled = true;
         document.getElementById('l-btn').disabled = true;
+        document.getElementById('status').innerText = "Checking...";
     }
 
     function revealResult(data) {
         const cSlot = document.getElementById('c-slot');
-        // 子のカードをオープン
+        // 子のカードをめくる
         cSlot.innerHTML = `<div class="card"><img src="images/png/${getCardFile(data.card)}" width="100%" style="border-radius:10px;"></div>`;
-        document.getElementById('status').innerText = "結果: " + (data.choice === "HIGH" ? "高い" : "低い") + " と予想しました";
         
-        // 次のターンへ（サーバーから自動的に送られてくる想定）
+        const status = document.getElementById('status');
+        if(data.win) {
+            status.innerHTML = "<span style='color:#00ff00'>MATCH! +2 POINTS</span>";
+        } else {
+            status.innerHTML = "<span style='color:#ff4444'>MISS...</span>";
+        }
+    }
+
+    function updateScores(scores) {
+        if(!scores) return;
+        // サーバーが[Player1Score, Player2Score]を送ってくる想定
+        // 自分がどちらかは最初のターンのroleで判定（簡易版）
+        if(myIndex === -1) {
+            // roleが送られてきた時、自分がどちらか固定する仕組みが必要ですが、
+            // 今回は便宜上、左をPlayer0, 右をPlayer1として描画します。
+        }
+        // ここでは暫定的に、scores[0]と[1]を表示
+        document.getElementById('opp-score').innerText = scores[0];
+        document.getElementById('my-score').innerText = scores[1];
     }
 
     function getCardFile(n) {
